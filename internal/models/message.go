@@ -32,7 +32,7 @@ const (
 
 // Message represents an IoT MQTT message in the system
 type Message struct {
-	ID         primitive.ObjectID     `bson:"_id,omitempty" json:"id"`
+	ID         interface{}            `bson:"_id,omitempty" json:"id"`                // Can be ObjectID for MongoDB or string for Firestore
 	Topic      string                 `bson:"topic" json:"topic"`                     // MQTT topic
 	Payload    string                 `bson:"payload" json:"payload"`                 // Raw message payload
 	Timestamp  time.Time              `bson:"timestamp" json:"timestamp"`             // Message timestamp
@@ -131,4 +131,26 @@ func indexOf(s, substr string) int {
 		}
 	}
 	return -1
+}
+
+// GetIDAsString returns the ID as string regardless of the underlying type
+func (m *Message) GetIDAsString() string {
+	switch id := m.ID.(type) {
+	case primitive.ObjectID:
+		return id.Hex()
+	case string:
+		return id
+	default:
+		return ""
+	}
+}
+
+// SetIDFromString sets the ID from a string (for use with Firestore)
+func (m *Message) SetIDFromString(id string) {
+	m.ID = id
+}
+
+// SetIDFromObjectID sets the ID from an ObjectID (for use with MongoDB)
+func (m *Message) SetIDFromObjectID(id primitive.ObjectID) {
+	m.ID = id
 }

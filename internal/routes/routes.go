@@ -21,16 +21,13 @@ func SetupRoutes(router *gin.Engine, messageController *controllers.MessageContr
 	api := router.Group("/api", middleware.IdentityPlatformMiddleware(cfg))
 	{
 		// Message routes
-		api.POST("/message", messageController.CreateMessage)
 		api.GET("/message/:id", messageController.GetMessage)
-		api.PUT("/message/:id", messageController.UpdateMessage)
-		api.DELETE("/message/:id", messageController.DeleteMessage)
 		api.GET("/message", messageController.ListMessages)
 
 		// Project-specific message routes
-		api.GET("/project/:projectId/message", messageController.ListMessagesByProject)
+		api.GET("/message/project/:projectId", messageController.ListMessagesByProject)
 
 		// Device-specific message routes
-		api.GET("/device/:deviceId/message", messageController.ListMessagesByDevice)
+		api.GET("/message/device/:deviceId", messageController.ListMessagesByDevice)
 	}
 }

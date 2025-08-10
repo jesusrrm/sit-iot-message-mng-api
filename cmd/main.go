@@ -19,13 +19,15 @@ func main() {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
-	// Initialize database
-	db, err := database.InitDB(cfg)
+	log.Printf("Using database provider: %s", cfg.DatabaseProvider)
+
+	// Initialize databases based on configuration
+	dbClients, err := database.InitDatabases(cfg)
 	if err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
+		log.Fatalf("Failed to initialize databases: %v", err)
 	}
 
-	// Initialize Firebase
+	// Initialize Firebase for authentication
 	firebaseApp, err := database.InitFirebase(cfg.FirebaseCredentialsPath)
 	if err != nil {
 		log.Fatalf("Failed to initialize Firebase: %v", err)
@@ -36,8 +38,16 @@ func main() {
 		log.Fatalf("Failed to initialize Firebase Auth: %v", err)
 	}
 
-	// Initialize repositories
-	messageRepo := repositories.NewMessageRepository(db)
+	// Initialize repository factory
+	repoFactory := repositories.NewRepositoryFactory(cfg)
+
+	// Create message repository using the factory
+	messageRepo, err := repoFactory.CreateMessageRepository(dbClients.MongoDB, dbClients.Firestore)
+	if err != nil {
+		log.Fatalf("Failed to create message repository: %v", err)
+	}
+
+	log.Printf("Message repository initialized for %s", repoFactory.GetDatabaseProvider())
 
 	// Initialize services
 	messageService := services.NewMessageService(messageRepo, firebaseAuth)

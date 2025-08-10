@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"net/http"
 //  "sit-iot-message-mng-api/internal/middleware"
-	"sit-iot-message-mng-api/internal/models"
 	"sit-iot-message-mng-api/internal/services"
 	"sit-iot-message-mng-api/internal/utils"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type MessageController struct {
@@ -23,24 +21,7 @@ func NewMessageController(messageService services.MessageService) *MessageContro
 	}
 }
 
-func (mc *MessageController) CreateMessage(c *gin.Context) {
-	// userID := c.Request.Context().Value(middleware.UserIDKey).(string)
-	// userEmail := c.Request.Context().Value(middleware.UserEmailKey).(string)
 
-	var message models.Message
-	if err := c.ShouldBindJSON(&message); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	err := mc.MessageService.CreateMessage(c.Request.Context(), &message)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, message)
-}
 
 func (mc *MessageController) GetMessage(c *gin.Context) {
 	id := c.Param("id")
@@ -54,38 +35,6 @@ func (mc *MessageController) GetMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, message)
 }
 
-func (mc *MessageController) UpdateMessage(c *gin.Context) {
-	id := c.Param("id")
-
-	var message models.Message
-	if err := c.ShouldBindJSON(&message); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Ensure the ID in the URL matches the message ID
-	message.ID, _ = primitive.ObjectIDFromHex(id)
-
-	err := mc.MessageService.UpdateMessage(c.Request.Context(), &message)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, message)
-}
-
-func (mc *MessageController) DeleteMessage(c *gin.Context) {
-	id := c.Param("id")
-
-	err := mc.MessageService.DeleteMessage(c.Request.Context(), id)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusNoContent, nil)
-}
 
 func (mc *MessageController) ListMessages(c *gin.Context) {
 	// Parse query params
