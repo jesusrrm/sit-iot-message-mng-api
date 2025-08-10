@@ -23,7 +23,7 @@ func LoadConfig() (*Config, error) {
 		AuthApiKey:              getEnv("AUTH_API_KEY", ""),
 		Audience:                getEnv("AUDIENCE", ""),
 		ProjectServiceApiUrl:    getEnv("PROJECT_SERVICE_API_URL", "http://localhost"),
-		DBName:   				 getEnv("DB_NAME", "sit-iot-message-mng"),
+		DBName:   				 getEnv("DB_NAME_MESSAGE_MNG", "sit-iot-messages-mng"),
 	}, nil
 }
 
