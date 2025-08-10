@@ -143,7 +143,7 @@ func (s *messageService) ListMessagesByProjectID(ctx context.Context, projectID 
 
 	// TODO: Add authorization check to ensure user is a member of the project
 
-	return s.messageRepo.ListByProjectID(ctx, projectID, filter, sortField, sortOrder, skip, limit)
+	return []*models.Message{}, 0, nil //s.messageRepo.ListByProjectID(ctx, projectID, filter, sortField, sortOrder, skip, limit)
 }
 
 func (s *messageService) ListMessagesByDeviceID(ctx context.Context, deviceID string, filter map[string]interface{}, sortField, sortOrder string, skip, limit int) ([]*models.Message, int, error) {
@@ -164,7 +164,7 @@ func (s *messageService) ListMessagesByDeviceID(ctx context.Context, deviceID st
 		return nil, 0, err
 	}
 
-	return s.messageRepo.ListByDeviceID(ctx, deviceID, filter, sortField, sortOrder, skip, limit)
+	return []*models.Message{}, 0, nil // s.messageRepo.ListByDeviceID(ctx, deviceID, filter, sortField, sortOrder, skip, limit)
 }
 
 func (s *messageService) VerifyToken(ctx context.Context, token string) (*auth.Token, error) {
