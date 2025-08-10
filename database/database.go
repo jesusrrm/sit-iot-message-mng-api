@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"sit-iot-message-mng-api/config"
 
 	firebase "firebase.google.com/go/v4"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -9,8 +10,8 @@ import (
 	"google.golang.org/api/option"
 )
 
-func InitDB(databaseURL string) (*mongo.Database, error) {
-	clientOptions := options.Client().ApplyURI(databaseURL)
+func InitDB(cfg *config.Config) (*mongo.Database, error) {
+	clientOptions := options.Client().ApplyURI(cfg.DatabaseURL)
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
 		return nil, err
@@ -23,7 +24,7 @@ func InitDB(databaseURL string) (*mongo.Database, error) {
 	}
 
 	// Extract database name from URL (simplified)
-	db := client.Database("sit_iot_message_mng")
+	db := client.Database(cfg.DBName)
 	return db, nil
 }
 
