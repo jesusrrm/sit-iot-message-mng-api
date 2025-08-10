@@ -2,13 +2,13 @@ package middleware
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"strings"
-
+	
+	"sit-iot-message-mng-api/internal/utils"
 	"sit-iot-message-mng-api/config"
 
 	"github.com/gin-gonic/gin"
@@ -18,6 +18,7 @@ type contextKey string
 
 const UserIDKey contextKey = "userID"
 const UserEmailKey contextKey = "userEmail"
+const TokenKey contextKey = "tokenKey"
 
 func IdentityPlatformMiddleware(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -41,6 +42,7 @@ func IdentityPlatformMiddleware(cfg *config.Config) gin.HandlerFunc {
 
 		// Validate the token using Identity Platform's REST API
 		apiURL := fmt.Sprintf("https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=%s", cfg.AuthApiKey)
+
 		req, err := http.NewRequestWithContext(context.Background(), "POST", apiURL, strings.NewReader(fmt.Sprintf(`{"idToken":"%s"}`, token)))
 		if err != nil {
 			log.Printf("Failed to create request: %v", err)
@@ -67,52 +69,28 @@ func IdentityPlatformMiddleware(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		// Parse response to get user info
-		var tokenResponse struct {
-			Users []struct {
-				LocalID string `json:"localId"`
-				Email   string `json:"email"`
-			} `json:"users"`
-		}
-
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			log.Printf("Failed to read response body: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read response"})
-			c.Abort()
-			return
-		}
-
-		if err := json.Unmarshal(body, &tokenResponse); err != nil {
-			log.Printf("Failed to parse response: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse response"})
-			c.Abort()
-			return
-		}
-
-		if len(tokenResponse.Users) == 0 {
-			log.Println("No user found in token response")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-			c.Abort()
-			return
-		}
-
-		userID := tokenResponse.Users[0].LocalID
-		userEmail := tokenResponse.Users[0].Email
+		tokenStr := utils.ExtractBearerToken(authHeader)
+		userID := utils.GetUserIDFromToken(tokenStr)
+		userEmail := utils.GetUserEmailFromToken(tokenStr)
 
 		if userID == "" {
-			log.Println("User ID not found in token")
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			return
 		}
 
-		log.Printf("User authenticated: ID=%s, Email=%s", userID, userEmail)
-
-		// Add userID and userEmail to the context
+		// Add userID to the context
 		ctx := context.WithValue(c.Request.Context(), UserIDKey, userID)
 		ctx = context.WithValue(ctx, UserEmailKey, userEmail)
+		ctx = context.WithValue(ctx, TokenKey, tokenStr)
 
 		c.Request = c.Request.WithContext(ctx)
+
+		log.Printf("Token received: %s", token)
+		log.Printf("Audience: %s", cfg.Audience)
+		log.Printf("Request URL: %s", apiURL)
+		log.Printf("AuthApiKey: %s", cfg.AuthApiKey)
+		log.Printf("User ID: %s", userID)
+		log.Printf("User Email: %s", userEmail)
 		// Proceed to the next handler
 		c.Next()
 	}

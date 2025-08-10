@@ -42,7 +42,7 @@ func (r *messageRepository) Create(ctx context.Context, message *models.Message)
 
 	userEmail, ok := ctx.Value(middleware.UserEmailKey).(string)
 	if !ok || userEmail == "" {
-		return errors.New("user email not found in context")
+		return errors.New("user email not found in context0")
 	}
 
 	// Set metadata
