@@ -3,13 +3,12 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"strings"
-	
-	"sit-iot-message-mng-api/internal/utils"
+
 	"sit-iot-message-mng-api/config"
+	"sit-iot-message-mng-api/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -62,8 +61,6 @@ func IdentityPlatformMiddleware(cfg *config.Config) gin.HandlerFunc {
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			body, _ := io.ReadAll(resp.Body)
-			log.Printf("Token validation failed with status code: %d, response: %s", resp.StatusCode, string(body))
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
 			c.Abort()
 			return
@@ -85,12 +82,6 @@ func IdentityPlatformMiddleware(cfg *config.Config) gin.HandlerFunc {
 
 		c.Request = c.Request.WithContext(ctx)
 
-		log.Printf("Token received: %s", token)
-		log.Printf("Audience: %s", cfg.Audience)
-		log.Printf("Request URL: %s", apiURL)
-		log.Printf("AuthApiKey: %s", cfg.AuthApiKey)
-		log.Printf("User ID: %s", userID)
-		log.Printf("User Email: %s", userEmail)
 		// Proceed to the next handler
 		c.Next()
 	}

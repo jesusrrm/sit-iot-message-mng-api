@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"log"
 	"sit-iot-message-mng-api/config"
 	"sit-iot-message-mng-api/internal/middleware"
 	"sit-iot-message-mng-api/internal/models"
@@ -62,17 +61,11 @@ func (s *messageService) ListMessages(ctx context.Context, filter map[string]int
 		return nil, 0, err
 	}
 
-	// Log the fetched users for debugging
-	log.Printf("Fetched %d users from %d projects", len(usersResponse.Users), len(usersResponse.ProjectIDs))
-	log.Printf("%+v", usersResponse)
-
 	// Collect all client IDs from all users
 	var allClientIDs []string
 	for _, user := range usersResponse.Users {
 		allClientIDs = append(allClientIDs, user.ClientIDs...)
 	}
-
-	log.Printf("Collected %d client IDs: %v", len(allClientIDs), allClientIDs)
 
 	// Return error if no client IDs found
 	if len(allClientIDs) == 0 {

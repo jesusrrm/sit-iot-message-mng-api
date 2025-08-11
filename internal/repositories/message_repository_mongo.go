@@ -69,12 +69,6 @@ func (r *messageRepository) List(ctx context.Context, filter map[string]interfac
 		sort = 1
 	}
 
-	// Log the exact MongoDB query that will be executed
-	log.Printf("MongoDB Query - Collection: messages")
-	log.Printf("MongoDB Query - Filter: %+v", bsonFilter)
-	log.Printf("MongoDB Query - Sort: {%s: %d}", sortField, sort)
-	log.Printf("MongoDB Query - Skip: %d, Limit: %d", skip, limit)
-
 	opts := options.Find()
 	opts.SetSkip(int64(skip))
 	opts.SetLimit(int64(limit))

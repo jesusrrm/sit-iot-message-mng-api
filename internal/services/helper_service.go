@@ -23,7 +23,6 @@ func (s *messageService) VerifyToken(ctx context.Context, token string) (*auth.T
 
 // Helper function to fetch project IDs from the REST API
 func (s *messageService) fetchProjectIDs(ctx context.Context) ([]primitive.ObjectID, error) {
-	// Log the API URL being called
 	apiURL := s.Config.ProjectServiceApiUrl + "/api/project"
 
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
@@ -35,15 +34,8 @@ func (s *messageService) fetchProjectIDs(ctx context.Context) ([]primitive.Objec
 	// Extract Authorization header from context
 	tokenStr, ok := ctx.Value(middleware.TokenKey).(string)
 	if !ok || tokenStr == "" {
-		log.Printf("Authorization token not found in context for fetchProjectIDs")
-		log.Printf("Context values - UserID: %v, UserEmail: %v, Token: %v",
-			ctx.Value(middleware.UserIDKey),
-			ctx.Value(middleware.UserEmailKey),
-			ctx.Value(middleware.TokenKey))
 		return nil, errors.New("authorization token is missing")
 	}
-
-	log.Printf("Token found in fetchProjectIDs context: %s", tokenStr[:10]+"...") // Log first 10 chars for security
 
 	// Add headers
 	req.Header.Set("accept", "*/*")
@@ -57,7 +49,6 @@ func (s *messageService) fetchProjectIDs(ctx context.Context) ([]primitive.Objec
 	}
 
 	// Make the request
-	log.Printf("Making HTTP request to project API...")
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("HTTP request failed: %v", err)
@@ -121,27 +112,18 @@ type UsersResponse struct {
 
 // Helper function to fetch all users with clients IDs from the REST API
 func (s *messageService) fetchUsers(ctx context.Context) (*UsersResponse, error) {
-	// Log the API URL being called
 	apiURL := s.Config.MqttServiceApiUrl + "/api/mqtt/users"
 
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
 	if err != nil {
-		log.Printf("Failed to create HTTP request: %v", err)
 		return nil, errors.New("failed to create HTTP request")
 	}
 
 	// Extract Authorization header from context
 	tokenStr, ok := ctx.Value(middleware.TokenKey).(string)
 	if !ok || tokenStr == "" {
-		log.Printf("Authorization token not found in context")
-		log.Printf("Context values - UserID: %v, UserEmail: %v, Token: %v",
-			ctx.Value(middleware.UserIDKey),
-			ctx.Value(middleware.UserEmailKey),
-			ctx.Value(middleware.TokenKey))
 		return nil, errors.New("authorization token is missing")
 	}
-
-	log.Printf("Token found in context: %s", tokenStr[:10]+"...") // Log first 10 chars for security
 
 	// Add headers
 	req.Header.Set("accept", "*/*")
@@ -155,7 +137,6 @@ func (s *messageService) fetchUsers(ctx context.Context) (*UsersResponse, error)
 	}
 
 	// Make the request
-	log.Printf("Making HTTP request to project API...")
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("HTTP request failed: %v", err)
@@ -172,7 +153,6 @@ func (s *messageService) fetchUsers(ctx context.Context) (*UsersResponse, error)
 
 	// Check status code
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("Project API returned non-200 status: %d, body: %s", resp.StatusCode, string(bodyBytes))
 		return nil, errors.New(fmt.Sprintf("project API returned status %d: %s", resp.StatusCode, resp.Status))
 	}
 
@@ -182,8 +162,6 @@ func (s *messageService) fetchUsers(ctx context.Context) (*UsersResponse, error)
 	// Create a new reader from the body bytes
 	bodyReader := bytes.NewReader(bodyBytes)
 	if err := json.NewDecoder(bodyReader).Decode(&users); err != nil {
-		log.Printf("Failed to decode JSON response: %v", err)
-		log.Printf("Response body was: %s", string(bodyBytes))
 		return nil, errors.New("failed to parse users API response")
 	}
 
