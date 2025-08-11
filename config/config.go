@@ -13,6 +13,7 @@ type Config struct {
 	ProjectServiceApiUrl    string
 	DBName                  string
 	DatabaseProvider        string // "mongo" or "firestore"
+	MqttServiceApiUrl       string
 }
 
 func LoadConfig() (*Config, error) {
@@ -25,6 +26,7 @@ func LoadConfig() (*Config, error) {
 		ProjectServiceApiUrl:    getEnv("PROJECT_SERVICE_API_URL", "http://localhost"),
 		DBName:                  getEnv("DB_NAME_MESSAGE_MNG", "sit-iot-messages-mng"),
 		DatabaseProvider:        getEnv("DATABASE_PROVIDER", "mongo"), // Default to MongoDB
+		MqttServiceApiUrl:       getEnv("MQTT_SERVICE_API_URL", "http://localhost"),
 	}, nil
 }
 

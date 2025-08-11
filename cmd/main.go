@@ -50,7 +50,7 @@ func main() {
 	log.Printf("Message repository initialized for %s", repoFactory.GetDatabaseProvider())
 
 	// Initialize services
-	messageService := services.NewMessageService(messageRepo, firebaseAuth)
+	messageService := services.NewMessageService(messageRepo, firebaseAuth, cfg)
 
 	// Initialize controllers
 	messageController := controllers.NewMessageController(messageService)

@@ -13,7 +13,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-
 type messageRepository struct {
 	collection *mongo.Collection
 }
@@ -40,7 +39,6 @@ func (r *messageRepository) FindByID(ctx context.Context, id string) (*models.Me
 	}
 	return &message, nil
 }
-
 
 func (r *messageRepository) List(ctx context.Context, filter map[string]interface{}, sortField, sortOrder string, skip, limit int) ([]*models.Message, int, error) {
 	// Convert filter to bson.M
@@ -70,6 +68,12 @@ func (r *messageRepository) List(ctx context.Context, filter map[string]interfac
 	if sortOrder == "ASC" {
 		sort = 1
 	}
+
+	// Log the exact MongoDB query that will be executed
+	log.Printf("MongoDB Query - Collection: messages")
+	log.Printf("MongoDB Query - Filter: %+v", bsonFilter)
+	log.Printf("MongoDB Query - Sort: {%s: %d}", sortField, sort)
+	log.Printf("MongoDB Query - Skip: %d, Limit: %d", skip, limit)
 
 	opts := options.Find()
 	opts.SetSkip(int64(skip))

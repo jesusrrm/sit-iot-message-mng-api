@@ -22,10 +22,6 @@ func SetupRoutes(router *gin.Engine, messageController *controllers.MessageContr
 	{
 		// Message routes
 		api.GET("/message/:id", messageController.GetMessage)
-		api.GET("/message", messageController.ListMessages)
-
-		// Project-specific message routes
-		api.GET("/message/project/:projectId", messageController.ListMessagesByProject)
 
 		// Device-specific message routes
 		api.GET("/message/device/:deviceId", messageController.ListMessagesByDevice)

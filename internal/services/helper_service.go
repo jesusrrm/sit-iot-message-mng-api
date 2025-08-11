@@ -17,8 +17,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-
-
 func (s *messageService) VerifyToken(ctx context.Context, token string) (*auth.Token, error) {
 	return s.firebaseAuth.VerifyIDToken(ctx, token)
 }
@@ -37,9 +35,15 @@ func (s *messageService) fetchProjectIDs(ctx context.Context) ([]primitive.Objec
 	// Extract Authorization header from context
 	tokenStr, ok := ctx.Value(middleware.TokenKey).(string)
 	if !ok || tokenStr == "" {
-		log.Printf("Authorization token not found in context")
+		log.Printf("Authorization token not found in context for fetchProjectIDs")
+		log.Printf("Context values - UserID: %v, UserEmail: %v, Token: %v",
+			ctx.Value(middleware.UserIDKey),
+			ctx.Value(middleware.UserEmailKey),
+			ctx.Value(middleware.TokenKey))
 		return nil, errors.New("authorization token is missing")
 	}
+
+	log.Printf("Token found in fetchProjectIDs context: %s", tokenStr[:10]+"...") // Log first 10 chars for security
 
 	// Add headers
 	req.Header.Set("accept", "*/*")
@@ -101,10 +105,24 @@ func (s *messageService) fetchProjectIDs(ctx context.Context) ([]primitive.Objec
 
 	return projectIDs, nil
 }
+
+// UserData represents a user with client IDs and project ID for API responses
+type UserData struct {
+	Username  string   `json:"username"`
+	ClientIDs []string `json:"client_ids"`
+	ProjectID string   `json:"project_id"`
+}
+
+// UsersResponse holds both users and their associated project IDs
+type UsersResponse struct {
+	Users      []UserData           `json:"users"`
+	ProjectIDs []primitive.ObjectID `json:"project_ids"`
+}
+
 // Helper function to fetch all users with clients IDs from the REST API
-func (s *messageService) fetchUsers(ctx context.Context) ([]primitive.ObjectID, error) {
+func (s *messageService) fetchUsers(ctx context.Context) (*UsersResponse, error) {
 	// Log the API URL being called
-	apiURL := s.Config.ProjectServiceApiUrl + "/api/mqtt/users"
+	apiURL := s.Config.MqttServiceApiUrl + "/api/mqtt/users"
 
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
 	if err != nil {
@@ -116,8 +134,14 @@ func (s *messageService) fetchUsers(ctx context.Context) ([]primitive.ObjectID, 
 	tokenStr, ok := ctx.Value(middleware.TokenKey).(string)
 	if !ok || tokenStr == "" {
 		log.Printf("Authorization token not found in context")
+		log.Printf("Context values - UserID: %v, UserEmail: %v, Token: %v",
+			ctx.Value(middleware.UserIDKey),
+			ctx.Value(middleware.UserEmailKey),
+			ctx.Value(middleware.TokenKey))
 		return nil, errors.New("authorization token is missing")
 	}
+
+	log.Printf("Token found in context: %s", tokenStr[:10]+"...") // Log first 10 chars for security
 
 	// Add headers
 	req.Header.Set("accept", "*/*")
@@ -135,7 +159,7 @@ func (s *messageService) fetchUsers(ctx context.Context) ([]primitive.ObjectID, 
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("HTTP request failed: %v", err)
-		return nil, errors.New("failed to connect to project API")
+		return nil, errors.New("failed to connect to MQTT API")
 	}
 	defer resp.Body.Close()
 
@@ -152,30 +176,38 @@ func (s *messageService) fetchUsers(ctx context.Context) ([]primitive.ObjectID, 
 		return nil, errors.New(fmt.Sprintf("project API returned status %d: %s", resp.StatusCode, resp.Status))
 	}
 
-	// Parse the response
-	var projects []struct {
-		ID string `json:"id"`
-	}
+	// Parse the response as UserWithClients (API response format)
+	var users []UserData
 
 	// Create a new reader from the body bytes
 	bodyReader := bytes.NewReader(bodyBytes)
-	if err := json.NewDecoder(bodyReader).Decode(&projects); err != nil {
+	if err := json.NewDecoder(bodyReader).Decode(&users); err != nil {
 		log.Printf("Failed to decode JSON response: %v", err)
 		log.Printf("Response body was: %s", string(bodyBytes))
-		return nil, errors.New("failed to parse project API response")
+		return nil, errors.New("failed to parse users API response")
 	}
 
-	// Convert project IDs to ObjectIDs
+	// Extract unique project IDs from users and convert to ObjectIDs
+	projectIDSet := make(map[string]bool)
 	var projectIDs []primitive.ObjectID
-	for i, project := range projects {
 
-		objectID, err := primitive.ObjectIDFromHex(project.ID)
+	for i, user := range users {
+		// Skip if project ID already processed
+		if projectIDSet[user.ProjectID] {
+			continue
+		}
+		projectIDSet[user.ProjectID] = true
+
+		objectID, err := primitive.ObjectIDFromHex(user.ProjectID)
 		if err != nil {
-			log.Printf("Invalid ObjectID format for project %d (ID: %s): %v", i+1, project.ID, err)
-			return nil, errors.New(fmt.Sprintf("invalid project ID format: %s", project.ID))
+			log.Printf("Invalid ObjectID format for user %d project ID (%s): %v", i+1, user.ProjectID, err)
+			return nil, errors.New(fmt.Sprintf("invalid project ID format: %s", user.ProjectID))
 		}
 		projectIDs = append(projectIDs, objectID)
 	}
 
-	return projectIDs, nil
+	return &UsersResponse{
+		Users:      users,
+		ProjectIDs: projectIDs,
+	}, nil
 }
