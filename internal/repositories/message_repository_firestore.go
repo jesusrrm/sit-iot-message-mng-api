@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
-    "sit-iot-message-mng-api/internal/models"
+	"sit-iot-message-mng-api/internal/models"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -22,7 +22,6 @@ func NewFirestoreMessageRepository(client *firestore.Client) MessageRepository {
 		collection: "messages",
 	}
 }
-
 
 func (r *firestoreMessageRepository) FindByID(ctx context.Context, id string) (*models.Message, error) {
 	if id == "" {
@@ -46,8 +45,6 @@ func (r *firestoreMessageRepository) FindByID(ctx context.Context, id string) (*
 	message.SetIDFromString(doc.Ref.ID)
 	return &message, nil
 }
-
-
 
 func (r *firestoreMessageRepository) List(ctx context.Context, filter map[string]interface{}, sortField, sortOrder string, skip, limit int) ([]*models.Message, int, error) {
 	query := r.client.Collection(r.collection).Query
@@ -149,9 +146,9 @@ func (r *firestoreMessageRepository) FindByTopic(ctx context.Context, topic stri
 	return messages, nil
 }
 
-func (r *firestoreMessageRepository) FindByClientID(ctx context.Context, clientID string, limit int) ([]*models.Message, error) {
+func (r *firestoreMessageRepository) FindByDeviceID(ctx context.Context, deviceID string, limit int) ([]*models.Message, error) {
 	query := r.client.Collection(r.collection).
-		Where("client_id", "==", clientID).
+		Where("device_id", "==", deviceID).
 		OrderBy("timestamp", firestore.Desc).
 		Limit(limit)
 

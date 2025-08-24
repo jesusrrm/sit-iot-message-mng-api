@@ -131,12 +131,12 @@ func (r *messageRepository) FindByTopic(ctx context.Context, topic string, limit
 	return messages, cursor.Err()
 }
 
-func (r *messageRepository) FindByClientID(ctx context.Context, clientID string, limit int) ([]*models.Message, error) {
+func (r *messageRepository) FindByDeviceID(ctx context.Context, deviceID string, limit int) ([]*models.Message, error) {
 	opts := options.Find()
 	opts.SetLimit(int64(limit))
 	opts.SetSort(bson.D{{Key: "timestamp", Value: -1}}) // Most recent first
 
-	filter := bson.M{"client_id": clientID}
+	filter := bson.M{"device_id": deviceID}
 	cursor, err := r.collection.Find(ctx, filter, opts)
 	if err != nil {
 		return nil, err

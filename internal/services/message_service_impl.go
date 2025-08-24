@@ -92,31 +92,31 @@ func (s *messageService) ListMessagesByDeviceID(ctx context.Context, deviceID st
 
 	// TODO: Add authorization check to ensure user can access messages from this device
 	// Make a REST call to fetch project IDs to ensure user has access
-	usersResponse, err := s.fetchUsers(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
+	// usersResponse, err := s.fetchUsers(ctx)
+	// if err != nil {
+	// 	return nil, 0, err
+	// }
 
-	// Validate that user has access to client IDs (similar validation as in ListMessages)
-	var allClientIDs []string
-	for _, user := range usersResponse.Users {
-		allClientIDs = append(allClientIDs, user.ClientIDs...)
-	}
+	// // Validate that user has access to client IDs (similar validation as in ListMessages)
+	// var allClientIDs []string
+	// for _, user := range usersResponse.Users {
+	// 	allClientIDs = append(allClientIDs, user.ClientIDs...)
+	// }
 
-	// Check if the requested deviceID (clientID) is in the user's allowed client IDs
-	var hasAccess bool
-	for _, clientID := range allClientIDs {
-		if clientID == deviceID {
-			hasAccess = true
-			break
-		}
-	}
+	// // Check if the requested deviceID (clientID) is in the user's allowed client IDs
+	// var hasAccess bool
+	// for _, clientID := range allClientIDs {
+	// 	if clientID == deviceID {
+	// 		hasAccess = true
+	// 		break
+	// 	}
+	// }
 
-	if !hasAccess {
-		return nil, 0, errors.New("access denied: device not found in user's allowed client IDs")
-	}
+	// if !hasAccess {
+	// 	return nil, 0, errors.New("access denied: device not found in user's allowed client IDs")
+	// }
 
-	messages, err := s.messageRepo.FindByClientID(ctx, deviceID, limit)
+	messages, err := s.messageRepo.FindByDeviceID(ctx, deviceID, limit)
 	if err != nil {
 		return nil, 0, err
 	}
