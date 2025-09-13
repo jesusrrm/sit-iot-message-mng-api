@@ -210,3 +210,43 @@ func (r *firestoreMessageRepository) FindByTimeRange(ctx context.Context, from, 
 
 	return messages, nil
 }
+
+// GetAggregatedDataByDeviceID returns aggregated data for a device (placeholder implementation)
+func (r *firestoreMessageRepository) GetAggregatedDataByDeviceID(ctx context.Context, deviceID string) ([]map[string]interface{}, error) {
+	// Fetch the aggregated document for the device
+	doc, err := r.client.Collection("aggregations").Doc(deviceID).Get(ctx)
+	if err != nil {
+		if doc != nil && !doc.Exists() {
+			return nil, errors.New("aggregated data not found")
+		}
+		return nil, err
+	}
+
+	var agg models.ClientAggregations
+	if err := doc.DataTo(&agg); err != nil {
+		return nil, err
+	}
+
+	// Flatten the nested aggregation structure for API response
+	var result []map[string]interface{}
+	for channel, variables := range agg.Aggregations {
+		for variable, periods := range variables {
+			for period, timestamps := range periods {
+				for ts, data := range timestamps {
+					result = append(result, map[string]interface{}{
+						"channel":   channel,
+						"variable":  variable,
+						"period":    period,
+						"timestamp": ts,
+						"min":       data.Min,
+						"max":       data.Max,
+						"avg":       data.Avg,
+						"sum":       data.Sum,
+						"count":     data.Count,
+					})
+				}
+			}
+		}
+	}
+	return result, nil
+}

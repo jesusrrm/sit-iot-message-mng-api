@@ -122,3 +122,8 @@ func (s *messageService) ListMessagesByDeviceID(ctx context.Context, deviceID st
 	}
 	return messages, len(messages), nil
 }
+
+// GetAggregatedDataByDeviceID returns aggregated data for a device (placeholder implementation)
+func (s *messageService) GetAggregatedDataByDeviceID(ctx context.Context, deviceID string) ([]map[string]interface{}, error) {
+	return s.messageRepo.GetAggregatedDataByDeviceID(ctx, deviceID)
+}

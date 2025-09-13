@@ -33,7 +33,6 @@ func (mc *MessageController) GetMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, message)
 }
 
-
 func (mc *MessageController) ListMessagesByDevice(c *gin.Context) {
 	deviceID := c.Param("deviceId")
 
@@ -73,4 +72,21 @@ func (mc *MessageController) ListMessagesByDevice(c *gin.Context) {
 	contentRange := fmt.Sprintf("items %d-%d/%d", skip, end, total)
 	c.Header("Content-Range", contentRange)
 	c.JSON(http.StatusOK, messages)
+}
+
+// GetAggregatedDataByDevice returns aggregated data for a device for graphing max, min, avg
+func (mc *MessageController) GetAggregatedDataByDevice(c *gin.Context) {
+	deviceID := c.Param("deviceId")
+
+	aggregations, err := mc.MessageService.GetAggregatedDataByDeviceID(c.Request.Context(), deviceID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	response := gin.H{
+		"device_id":    deviceID,
+		"aggregations": aggregations,
+	}
+	c.JSON(http.StatusOK, response)
 }

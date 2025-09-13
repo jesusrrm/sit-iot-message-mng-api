@@ -25,5 +25,8 @@ func SetupRoutes(router *gin.Engine, messageController *controllers.MessageContr
 
 		// Device-specific message routes
 		api.GET("/message/device/:deviceId", messageController.ListMessagesByDevice)
+
+		// Aggregated data for device (for graphing max, min, avg)
+		api.GET("/message/aggregations/device/:deviceId", messageController.GetAggregatedDataByDevice)
 	}
 }

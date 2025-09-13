@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"log"
-	"sit-iot-message-mng-api/internal/models"
 	"time"
+
+	"sit-iot-message-mng-api/internal/models"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -183,4 +184,41 @@ func (r *messageRepository) FindByTimeRange(ctx context.Context, from, to time.T
 	}
 
 	return messages, cursor.Err()
+}
+
+// GetAggregatedDataByDeviceID returns aggregated data for a device (placeholder implementation)
+func (r *messageRepository) GetAggregatedDataByDeviceID(ctx context.Context, deviceID string) ([]map[string]interface{}, error) {
+	// Fetch the aggregated document for the device
+	filter := bson.M{"client_id": deviceID}
+	var agg models.ClientAggregations
+	err := r.collection.Database().Collection("aggregations").FindOne(ctx, filter).Decode(&agg)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, errors.New("aggregated data not found")
+		}
+		return nil, err
+	}
+
+	// Flatten the nested aggregation structure for API response
+	var result []map[string]interface{}
+	for channel, variables := range agg.Aggregations {
+		for variable, periods := range variables {
+			for period, timestamps := range periods {
+				for ts, data := range timestamps {
+					result = append(result, map[string]interface{}{
+						"channel":   channel,
+						"variable":  variable,
+						"period":    period,
+						"timestamp": ts,
+						"min":       data.Min,
+						"max":       data.Max,
+						"avg":       data.Avg,
+						"sum":       data.Sum,
+						"count":     data.Count,
+					})
+				}
+			}
+		}
+	}
+	return result, nil
 }

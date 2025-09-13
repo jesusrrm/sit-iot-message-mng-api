@@ -2,10 +2,9 @@ package repositories
 
 import (
 	"context"
-
 	"sit-iot-message-mng-api/internal/models"
-	"time"
 
+	"time"
 )
 
 type MessageRepository interface {
@@ -14,4 +13,5 @@ type MessageRepository interface {
 	FindByTopic(ctx context.Context, topic string, limit int) ([]*models.Message, error)
 	FindByDeviceID(ctx context.Context, deviceID string, limit int) ([]*models.Message, error)
 	FindByTimeRange(ctx context.Context, from, to time.Time, limit int) ([]*models.Message, error)
+	GetAggregatedDataByDeviceID(ctx context.Context, deviceID string) ([]map[string]interface{}, error)
 }
